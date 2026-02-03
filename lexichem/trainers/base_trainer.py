@@ -89,6 +89,7 @@ class T5BaseModel(pl.LightningModule):
         lr_backbone = getattr(self.args.lr, "backbone", None)
         if lr_backbone is None:
             raise ValueError("lr_backbone must be specified")
+        lr_backbone = float(lr_backbone)
              
         param_groups = [
             {"params": self.t5_model.parameters(), "lr": lr_backbone, "name": "backbone"},

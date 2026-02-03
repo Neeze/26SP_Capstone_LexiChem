@@ -55,8 +55,8 @@ class T5AlignerModel(pl.LightningModule):
             dropout=args.projector.dropout
         )
         self.config = self.t5_model.config
-        self.seq2seq_lambda = args.loss.seq2seq_lambda
-        self.alignment_lambda = args.loss.alignment_lambda
+        self.seq2seq_lambda = float(args.loss.seq2seq_lambda)
+        self.alignment_lambda = float(args.loss.alignment_lambda)
         self.t5_model.gradient_checkpointing_enable()
 
         # Inference
@@ -298,6 +298,8 @@ class T5AlignerModel(pl.LightningModule):
         lr_proj = getattr(self.args.lr, "projector", None)
         if lr_backbone is None or lr_proj is None:
             raise ValueError("lr_backbone and lr_proj must be specified")
+        lr_backbone = float(lr_backbone)
+        lr_proj = float(lr_proj)
 
         param_groups = [
             {"params": self.t5_model.parameters(), "lr": lr_backbone, "name": "backbone"},

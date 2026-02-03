@@ -42,8 +42,9 @@ def main(args):
         raise Exception('Method name is invalid, please choose one in two: base, aligner')
     
     print(f"Loading checkpoint from {args.checkpoint_path}...", flush=True)
-    checkpoint = torch.load(args.checkpoint_path, map_location=device)
-    state_dict = checkpoint['state_dict'] if 'state_dict' in checkpoint else checkpoint
+    model.load_state_dict(
+        torch.load(args.checkpoint_path, map_location=device)['state_dict'], strict=False
+    )
     
     model.to(device)
     model.eval()

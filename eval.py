@@ -22,7 +22,7 @@ def main(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     tokenizer = AutoTokenizer.from_pretrained(args.t5.pretrained_model_name_or_path)
     
-    if args.dataset_name == 'lpm-24':
+    if args.dataset_name == 'lpm-24' or args.dataset_name == 'lpm-24-extra':
         args.dataset_name_or_path = 'Neeze/LPM-24-eval-extend'
         split = 'validation'
     elif args.dataset_name == 'chebi-20':

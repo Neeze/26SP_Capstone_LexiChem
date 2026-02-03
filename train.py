@@ -14,7 +14,13 @@ from lightning.pytorch.strategies import (
     DDPStrategy,
     FSDPStrategy
 )
+import wandb
 import sys
+from dotenv import load_dotenv
+load_dotenv()
+
+# Login Wandb
+wandb.login(key=os.getenv("WANDB_API_KEY"))
 
 class Tee(object):
     def __init__(self, *files):

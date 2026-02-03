@@ -1,5 +1,6 @@
 import datasets
-from datasets.config import importlib_metadata, version
+from datasets.config import version
+import importlib.metadata as importlib_metadata
 import evaluate
 from rdkit import Chem
 from rdkit.Chem import MACCSkeys
@@ -78,6 +79,7 @@ class Mol_translation_selfies(evaluate.Metric):
         predictions_self = [predictions[i][1] for i in range(len(predictions))]
         outputs = []
         bad_mols = 0
+        total_mols = len(references)
         with open(tsv_path, "w", encoding="utf-8") as f:
             f.write("description\tground truth\toutput\tgt_selfies\toutput_selfies\n")
             for desc, gt_smi, out_smi, gt_self, out_self in zip(inputs, references_smi, predictions_smi, references_self, predictions_self):
@@ -92,6 +94,20 @@ class Mol_translation_selfies(evaluate.Metric):
                 outputs.append((desc, gt_smi, out_smi, gt_self, out_self))
         
         RDLogger.DisableLog('rdApp.*')
+        
+        if len(outputs) == 0:
+            validity_score = 1 - bad_mols/total_mols if total_mols > 0 else 0.0
+            return {
+                'bleu_smi': 0.0,
+                'bleu_self': 0.0,
+                'exact_match': 0.0,
+                'levenshtein_smi': 0.0,
+                'validity': validity_score,
+                'maccs_sims': 0.0,
+                'rdk_sims': 0.0,
+                'morgan_sims': 0.0,
+            }
+
         bleu_scores = []
         #meteor_scores = []
 
@@ -172,7 +188,7 @@ class Mol_translation_selfies(evaluate.Metric):
 
 
         # Exact matching score
-        exact_match_score = num_exact/(i+1)
+        exact_match_score = num_exact/len(outputs)
         if verbose:
             print('Exact Match:')
             print(exact_match_score)
@@ -183,7 +199,7 @@ class Mol_translation_selfies(evaluate.Metric):
             print('SMILES Levenshtein:')
             print(levenshtein_score)
             
-        validity_score = 1 - bad_mols/len(outputs)
+        validity_score = 1 - bad_mols/total_mols if total_mols > 0 else 0.0
         if verbose:
             print('bad mols:', bad_mols)
             print('validity:', validity_score)

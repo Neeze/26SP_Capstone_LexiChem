@@ -321,7 +321,7 @@ class T5AlignerModel(pl.LightningModule):
                 optimizer,
                 max_lr=[lr_backbone, lr_proj, lr_proj], 
                 total_steps=max_iter,
-                pct_start=self.args.warmup_ratio, 
+                pct_start=float(self.args.warmup_ratio), 
                 div_factor=25.0,
                 final_div_factor=1e4,   
                 anneal_strategy='cos'

@@ -1,15 +1,17 @@
 import torch
-from huggingface_hub import login
 from transformers import AutoTokenizer, GenerationConfig
 from transformers.models.t5 import T5ForConditionalGeneration
 from argparse import ArgumentParser
+from dotenv import load_dotenv
+from huggingface_hub import login
+load_dotenv()
+login(token=os.getenv("HF_TOKEN"))
 
 TORCH_VERSION = ".".join(torch.__version__.split(".")[:2])
 CUDA_VERSION = torch.__version__.split("+")[-1]
 print("torch: ", TORCH_VERSION, "; cuda: ", CUDA_VERSION)
 
 def main(args):
-    login(args.hf_token)
 
     base_id = "QizhiPei/biot5-plus-base"
     tokenizer = AutoTokenizer.from_pretrained(base_id)
@@ -49,6 +51,5 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--model_name", type=str, default="biot5-plus-base-sft")
     parser.add_argument("--ckpt_path", type=str, required=True)
-    parser.add_argument("--hf_token", type=str, required=True)
     args = parser.parse_args()
     main(args)

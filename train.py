@@ -1,9 +1,6 @@
-import torch
 from transformers import AutoTokenizer
 from lexichem.datasets import get_dataloaders
 import lightning as pl
-import optuna
-
 from lexichem.trainers import T5BaseModel, T5AlignerModel
 from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor, EarlyStopping
 from argparse import ArgumentParser, Namespace
@@ -11,8 +8,6 @@ from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch import seed_everything
 import yaml
 import os
-import math
-import wandb
 
 from lexichem.utils import set_nested_attr
 from lightning.pytorch.strategies import (

@@ -1,0 +1,37 @@
+method: 'aligner'
+seeds: 
+  - 1480
+  - 1000
+  - 256
+  - 2943
+  - 199
+t5:
+  pretrained_model_name_or_path: 'QizhiPei/biot5-plus-base'
+projector:
+  latent_dim: 768
+  hidden_dim: 2048
+  num_layers: 2
+  dropout: 0.1
+loss:
+  seq2seq_lambda: 1.0
+  alignment_lambda: 0.5
+lr:
+  backbone: 3e-5
+  projector: 1e-4
+trainer:
+  epochs: 5
+  batch_size: 32
+  grad_accum: 1
+  num_workers: 4
+  cuda: true
+  strategy: 'fsdp'
+  num_devices: 4
+  warmup_ratio: 0.01
+  precision: '32'
+  dataset_name: 'lpm-24'
+  output_folder: 'weights/'
+optuna:
+  use_optuna: false
+  n_trials: 10
+project:
+  name: 'LexiChem-Aligner-LPM24'

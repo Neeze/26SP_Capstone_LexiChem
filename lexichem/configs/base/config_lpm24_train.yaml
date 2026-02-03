@@ -11,13 +11,13 @@ lr:
   backbone: 3e-5
 trainer:
   epochs: 5
-  batch_size: 32
+  batch_size: 8
   grad_accum: 1
   num_workers: 4
   cuda: true
-  strategy: 'fsdp'
+  strategy: 'ddp'
   num_devices: 4
-  warmup_ratio: 0.01
+  warmup_ratio: 0.1
   precision: '32'
   dataset_name: 'lpm-24'
   output_folder: 'weights/'

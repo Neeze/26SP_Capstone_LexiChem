@@ -16,17 +16,17 @@ loss:
   seq2seq_lambda: 1.0
   alignment_lambda: 0.5
 lr:
-  backbone: 3e-5
-  projector: 1e-4
+  backbone: 1e-5
+  projector: 5e-5
 trainer:
   epochs: 5
-  batch_size: 32
+  batch_size: 4
   grad_accum: 1
   num_workers: 4
   cuda: true
-  strategy: 'fsdp'
+  strategy: 'ddp'
   num_devices: 4
-  warmup_ratio: 0.01
+  warmup_ratio: 0.1
   precision: '32'
   dataset_name: 'chebi-20'
   output_folder: 'weights/'

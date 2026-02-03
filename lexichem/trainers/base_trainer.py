@@ -108,7 +108,7 @@ class T5BaseModel(pl.LightningModule):
         scheduler = {
         "scheduler": torch.optim.lr_scheduler.OneCycleLR(
                 optimizer,
-                max_lr=[self.args.lr], 
+                max_lr=[lr_backbone], 
                 total_steps=max_iter,
                 pct_start=self.args.warmup_ratio, 
                 div_factor=25.0,

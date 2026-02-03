@@ -163,4 +163,9 @@ if __name__ == "__main__":
     for key, value in train_config.items():
         set_nested_attr(args, key, value)
     
+    # Flatten trainer config to top level for compatibility with existing code and models
+    if hasattr(args, 'trainer'):
+        for key, value in vars(args.trainer).items():
+            setattr(args, key, value)
+    
     main(args)

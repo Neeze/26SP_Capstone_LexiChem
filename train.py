@@ -75,9 +75,9 @@ def main(args):
             seed_everything(seed)
             tokenizer = AutoTokenizer.from_pretrained(args.t5.pretrained_model_name_or_path)
             if args.method == 'base':
-                model = T5BaseModel(args, tokenizer)
+                model = T5BaseModel(args)
             elif args.method == 'aligner':
-                model = T5AlignerModel(args, tokenizer)
+                model = T5AlignerModel(args)
             else:
                 raise Exception('Method name is invalid, please choose one in two: base, aligner')
             model.tokenizer = tokenizer

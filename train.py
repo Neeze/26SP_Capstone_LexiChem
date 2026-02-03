@@ -8,7 +8,7 @@ from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch import seed_everything
 import yaml
 import os
-
+from huggingface_hub import login
 from lexichem.utils import set_nested_attr
 from lightning.pytorch.strategies import (
     DDPStrategy,
@@ -21,6 +21,8 @@ load_dotenv()
 
 # Login Wandb
 wandb.login(key=os.getenv("WANDB_API_KEY"))
+# Login HuggingFace
+login(token=os.getenv("HF_TOKEN"))
 
 class Tee(object):
     def __init__(self, *files):

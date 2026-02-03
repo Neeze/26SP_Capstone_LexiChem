@@ -37,24 +37,23 @@ class T5AlignerModel(pl.LightningModule):
     def __init__(self, args):
         super().__init__()
         self.args = args
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.t5_model = T5ForConditionalGeneration.from_pretrained(
             args.t5.pretrained_model_name_or_path
-        ).to(device)
+        )
         self.molecule_proj = Projector(
             input_dim=self.t5_model.config.d_model,
             output_dim=args.projector.latent_dim,
             hidden_dim=args.projector.hidden_dim,
             num_layers=args.projector.num_layers,
             dropout=args.projector.dropout
-        ).to(device)
+        )
         self.language_proj = Projector(
             input_dim=self.t5_model.config.d_model,
             output_dim=args.projector.latent_dim,
             hidden_dim=args.projector.hidden_dim,
             num_layers=args.projector.num_layers,
             dropout=args.projector.dropout
-        ).to(device)
+        )
         self.config = self.t5_model.config
         self.seq2seq_lambda = args.loss.seq2seq_lambda
         self.alignment_lambda = args.loss.alignment_lambda

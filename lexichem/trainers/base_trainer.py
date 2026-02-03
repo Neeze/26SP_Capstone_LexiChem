@@ -10,7 +10,6 @@ class T5BaseModel(pl.LightningModule):
     def __init__(self, args):
         super().__init__()
         self.args = args
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # Initialize multimodal text-based model
         self.t5_model = T5ForConditionalGeneration.from_pretrained(
             args.t5.pretrained_model_name_or_path

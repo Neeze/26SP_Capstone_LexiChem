@@ -15,6 +15,7 @@ class T5BaseModel(pl.LightningModule):
             args.t5.pretrained_model_name_or_path
         )
         self.t5_model.gradient_checkpointing_enable()
+        self.save_hyperparameters(args)
 
         # Inference
         self.generation_config = {

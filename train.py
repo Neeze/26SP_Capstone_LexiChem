@@ -148,6 +148,7 @@ def main(args):
                 precision=args.precision,
                 deterministic=True,
                 enable_checkpointing=True,
+                sync_batchnorm=True if args.strategy == 'ddp' else False,
             )
             trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)            
             

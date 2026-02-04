@@ -63,14 +63,14 @@ class Projector(nn.Module):
         else:
             # Input layer
             layers.append(nn.Linear(self.input_dim, self.hidden_dim))
-            layers.append(nn.LayerNorm(self.hidden_dim))
+            layers.append(nn.BatchNorm1d(self.hidden_dim))
             layers.append(act_layer())
             layers.append(nn.Dropout(self.dropout))
             
             # Hidden layers
             for _ in range(num_layers - 2):
                 layers.append(nn.Linear(self.hidden_dim, self.hidden_dim))
-                layers.append(nn.LayerNorm(self.hidden_dim))
+                layers.append(nn.BatchNorm1d(self.hidden_dim))
                 layers.append(act_layer())
                 layers.append(nn.Dropout(self.dropout))
             

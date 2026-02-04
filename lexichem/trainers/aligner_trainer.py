@@ -68,6 +68,8 @@ class T5AlignerModel(pl.LightningModule):
             "no_repeat_ngram_size": 0,
             "length_penalty": 1.0,
         }
+
+        self.save_hyperparameters(args)
         
     def resize_token_embeddings(self, len_embeddings):
         self.t5_model.resize_token_embeddings(len_embeddings)
@@ -236,8 +238,18 @@ class T5AlignerModel(pl.LightningModule):
         
         contrastive_loss = torch.tensor(0.0, device=device)
         lang_emb = self.language_proj(encoder_embeddings.detach())
-        mol_emb = self.molecule_proj(decoder_embeddings)  
-        vicreg_val = self.vicreg_loss(lang_emb, mol_emb)
+        mol_emb = self.molecule_proj(decoder_embeddings)
+
+        if self.trainer is not None and self.trainer.num_devices > 1:
+            # Sync gradients only during training to allow global batch VICReg
+            sync_grads = self.training
+            lang_emb_full = self.trainer.strategy.all_gather(lang_emb, sync_grads=sync_grads).reshape(-1, lang_emb.shape[-1])
+            mol_emb_full = self.trainer.strategy.all_gather(mol_emb, sync_grads=sync_grads).reshape(-1, mol_emb.shape[-1])
+        else:
+            lang_emb_full = lang_emb
+            mol_emb_full = mol_emb
+
+        vicreg_val = self.vicreg_loss(lang_emb_full, mol_emb_full)
         contrastive_loss = self.alignment_lambda * vicreg_val
 
         # ========================================================================

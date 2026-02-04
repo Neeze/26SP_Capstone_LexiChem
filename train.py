@@ -147,6 +147,7 @@ def main(args):
                 accumulate_grad_batches=args.grad_accum,
                 precision=args.precision,
                 deterministic=True,
+                enable_checkpointing=True,
             )
             trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)            
             

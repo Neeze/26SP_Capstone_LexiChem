@@ -1,5 +1,8 @@
+import os
 import yaml
 import torch
+import glob
+import json
 import pandas as pd
 import selfies as sf
 from tqdm import tqdm
@@ -10,14 +13,85 @@ from lexichem.datasets import get_dataloaders
 from lexichem.trainers import T5BaseModel, T5AlignerModel
 from lexichem.metrics.mol_translation_selfies_metrics import Mol_translation_selfies
 
-def selfies_to_smiles(selfie):
-    try:
-        smiles = sf.decoder(selfie)
-        return smiles
-    except Exception:
-        return None
+YELLOW = "\033[93m"
+GREEN = "\033[92m"
+RESET = "\033[0m"
+
+def print_args(args, indent=0):
+    for arg in vars(args):
+        val = getattr(args, arg)
+        if isinstance(val, Namespace):
+            print("  " * indent + f"{arg}:")
+            print_args(val, indent + 1)
+        else:
+            print("  " * indent + f"{arg}: {val}")
 
 def main(args):
+    print("--- Loaded Configuration ---")
+    print_args(args)
+    print("---------------------------")
+    project_name = args.project.name
+    method = args.method
+    seeds = args.seeds if isinstance(args.seeds, list) else [args.seeds]
+    print(f"Searching for folders for seeds: {seeds}")
+
+    found_folders = []
+    for seed in seeds:
+        # Search for folders matching the pattern: {project_name}_{method}_seed{seed}*
+        search_pattern = os.path.join(args.output_folder, f"{project_name}_{method}_seed{seed}*")
+        matched_folders = sorted(glob.glob(search_pattern))
+        matched_folders = [f for f in matched_folders if os.path.isdir(f)]
+        found_folders.extend(matched_folders)
+
+    print(f"Found {len(found_folders)} matching folders:")
+    for i, folder in enumerate(found_folders):
+        print(f" [{i+1}] {folder}")
+
+    if not found_folders:
+        print("No folders found matching the criteria.")
+        return
+
+    while True:
+        try:
+            choice = input("\nSelect a folder by index (e.g., 1): ")
+            choice_idx = int(choice) - 1
+            if 0 <= choice_idx < len(found_folders):
+                selected_folder = found_folders[choice_idx]
+                print(f"Selected: {selected_folder}")
+                break
+            else:
+                print(f"Invalid index. Please enter a number between 1 and {len(found_folders)}.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+    
+    base_ckpt_pattern = os.path.join(selected_folder, "*.ckpt")
+    ckpt_files = sorted(glob.glob(base_ckpt_pattern))
+    
+    if not ckpt_files:
+        subdir_pattern = os.path.join(selected_folder, "**", "*.ckpt")
+        ckpt_files = sorted(glob.glob(subdir_pattern, recursive=True))
+
+    print(f"\nFound {len(ckpt_files)} .ckpt files in {selected_folder}:")
+    for i, ckpt in enumerate(ckpt_files):
+        print(f" [{i+1}] {os.path.basename(ckpt)}")
+
+    if not ckpt_files:
+        print("No .ckpt files found.")
+        return
+
+    while True:
+        try:
+            choice = input("\nSelect a checkpoint by index (e.g., 1): ")
+            choice_idx = int(choice) - 1
+            if 0 <= choice_idx < len(ckpt_files):
+                selected_ckpt = ckpt_files[choice_idx]
+                print(f"Selected checkpoint: {selected_ckpt}")
+                break
+            else:
+                print(f"Invalid index. Please enter a number between 1 and {len(ckpt_files)}.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+            
     output_csv = args.project.name + '/' + args.dataset_name + '_eval.csv'
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     tokenizer = AutoTokenizer.from_pretrained(args.t5.pretrained_model_name_or_path)
@@ -41,11 +115,11 @@ def main(args):
     else:
         raise Exception('Method name is invalid, please choose one in two: base, aligner')
     
-    print(f"Loading checkpoint from {args.checkpoint_path}...", flush=True)
+    print(YELLOW + f"Loading checkpoint from {selected_ckpt}..." + RESET, flush=True)
     model.load_state_dict(
-        torch.load(args.checkpoint_path, map_location=device)['state_dict'], strict=False
+        torch.load(selected_ckpt, map_location=device)['state_dict'], strict=False
     )
-    
+
     model.to(device)
     model.eval()
 
@@ -56,7 +130,7 @@ def main(args):
     predictions = []
     references = []
     
-    print("Starting evaluation...")
+    print(YELLOW + "Starting evaluation..." + RESET, flush=True)
     with torch.no_grad():
         for batch in tqdm(dataloader):
             # Move relevant batch tensors to device
@@ -78,7 +152,7 @@ def main(args):
                 predictions.append([pred_smiles if pred_smiles else "", pred_selfie])
                 references.append([caption, gt_smiles if gt_smiles else "", gt_selfie])
 
-    print("Computing metrics...", flush=True)
+    print(YELLOW + "Computing metrics..." + RESET, flush=True)
     results = molecule_metric._compute(
         predictions=predictions,
         references=references,
@@ -86,12 +160,20 @@ def main(args):
         verbose=True
     )
 
-    print("\n" + "="*30, flush=True)
+    print(YELLOW + "\n" + "="*30, flush=True)
     print("EVALUATION RESULTS", flush=True)
     print("="*30, flush=True)
     for key, value in results.items():
         print(f"{key:15}: {value:.4f}", flush=True)
-    print("="*30, flush=True)
+    print("="*30 + RESET, flush=True)
+
+    # Save results to JSON
+    output_json = output_csv.replace('.csv', '.json')
+    os.makedirs(os.path.dirname(output_json), exist_ok=True)
+    with open(output_json, 'w') as f:
+        json.dump(results, f, indent=4)
+
+    print(GREEN + f"Metrics saved to {output_json}" + RESET, flush=True)
 
     # Save results to CSV
     df_results = pd.DataFrame({
@@ -104,17 +186,16 @@ def main(args):
     
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     df_results.to_csv(output_csv, index=False)
-    print(f"Results saved to {output_csv}")
-
+    print(GREEN + f"Results saved to {output_csv}" + RESET, flush=True)
+    
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument('--config', type=str)
-    parser.add_argument('--checkpoint_path', type=str, required=True)
-    
-    cmd_args = parser.parse_args()
-    
-    model_config = yaml.safe_load(open(args.model_config, 'r'))
-    for key, value in model_config.items():
+    parser = ArgumentParser(description="Evaluate script")
+    parser.add_argument('--config', type=str, help="Path to the configuration file")
+    args = parser.parse_args()
+    train_config = yaml.safe_load(open(args.config, 'r'))
+    for key, value in train_config.items():
         set_nested_attr(args, key, value)
-        
+    if hasattr(args, 'trainer'):
+        for key, value in vars(args.trainer).items():
+            setattr(args, key, value)
     main(args)

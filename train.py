@@ -16,6 +16,7 @@ from lightning.pytorch.strategies import (
 )
 import wandb
 import sys
+import time
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -57,7 +58,8 @@ def main(args):
     seeds = args.seeds if isinstance(args.seeds, list) else [args.seeds]
 
     for seed in seeds:
-        run_name = f"{args.project.name}_{args.method}_seed{seed}"
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        run_name = f"{args.project.name}_{args.method}_seed{seed}_{timestamp}"
         checkpoint_dir = os.path.join(args.output_folder, run_name)
         os.makedirs(checkpoint_dir, exist_ok=True)
         log_file_path = os.path.join(LOG_DIR, f"{run_name}.txt")
@@ -69,9 +71,9 @@ def main(args):
         sys.stderr = Tee(sys.stderr, f)
 
         try:
-            print(f"\n" + "="*50)
+            print(f"\033[93m\n" + "="*50)
             print(f"RUNNING EXPERIMENT WITH SEED: {seed}")
-            print("="*50 + "\n", flush=True)            
+            print("="*50 + "\033[0m\n", flush=True)            
             seed_everything(seed)
             tokenizer = AutoTokenizer.from_pretrained(args.t5.pretrained_model_name_or_path)
             if args.method == 'base':
@@ -140,8 +142,8 @@ def main(args):
                 max_epochs=args.epochs,
                 callbacks=callbacks,
                 logger=wandb_logger,
-                gradient_clip_val=1.0,
-                gradient_clip_algorithm="norm",
+                gradient_clip_val=1.0 if args.strategy != 'fsdp' else None,
+                gradient_clip_algorithm="norm" if args.strategy != 'fsdp' else None,
                 accumulate_grad_batches=args.grad_accum,
                 precision=args.precision,
                 deterministic=True,
@@ -149,6 +151,7 @@ def main(args):
             trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)            
             
         finally:
+            wandb.finish()
             sys.stdout = original_stdout
             sys.stderr = original_stderr
             f.close()

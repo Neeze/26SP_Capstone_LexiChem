@@ -75,14 +75,16 @@ python train.py --config lexichem/configs/aligner/config_chebi20_train.yaml
 ```
 
 ### 4. Evaluating model
+The evaluation script is interactive. It will ask you to select the experiment folder and the checkpoint to evaluate.
+
 #### Evaluate on LPM-24
 ```zsh
-
+python eval.py --config lexichem/configs/aligner/config_lpm24_train.yaml
 ```
 
 #### Evaluate on CheBI-20
 ```zsh
-
+python eval.py --config lexichem/configs/aligner/config_chebi20_train.yaml
 ```
 
 #### Push to hub
@@ -90,7 +92,6 @@ python train.py --config lexichem/configs/aligner/config_chebi20_train.yaml
 ```zsh
 python push_to_hub.py --model_name biot5-plus-base-sft \
                       --ckpt_path path/to/ckpt \
-                      --hf_token <your_hf_token>
 ```
 
 ### 5. Application

@@ -17,6 +17,13 @@ YELLOW = "\033[93m"
 GREEN = "\033[92m"
 RESET = "\033[0m"
 
+def selfies_to_smiles(selfie):
+    try:
+        smiles = sf.decoder(selfie)
+        return smiles
+    except Exception:
+        return None
+
 def print_args(args, indent=0):
     for arg in vars(args):
         val = getattr(args, arg)

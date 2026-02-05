@@ -12,7 +12,8 @@ class T5BaseModel(pl.LightningModule):
         self.args = args
         # Initialize multimodal text-based model
         self.t5_model = T5ForConditionalGeneration.from_pretrained(
-            args.t5.pretrained_model_name_or_path
+            args.t5.pretrained_model_name_or_path,
+            dropout_rate=args.t5.dropout
         )
         self.t5_model.gradient_checkpointing_enable()
         self.save_hyperparameters(args)
@@ -84,6 +85,7 @@ class T5BaseModel(pl.LightningModule):
         self.log('val/total_loss', loss, prog_bar=True, logger=True)
         self.log('val/seq2seq_loss', loss, prog_bar=True, logger=True)
         self.log('val_total_loss', loss, prog_bar=False, logger=False)
+        self.log('val_seq2seq_loss', loss, prog_bar=False, logger=False)
         return loss
     
     def configure_optimizers(self):

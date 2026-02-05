@@ -38,7 +38,8 @@ class T5AlignerModel(pl.LightningModule):
         super().__init__()
         self.args = args
         self.t5_model = T5ForConditionalGeneration.from_pretrained(
-            args.t5.pretrained_model_name_or_path
+            args.t5.pretrained_model_name_or_path,
+            dropout_rate=args.t5.dropout
         )
         self.molecule_proj = Projector(
             input_dim=self.t5_model.config.d_model,

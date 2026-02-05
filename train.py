@@ -95,7 +95,7 @@ def main(args):
             train_dataloader = get_dataloaders(
                 args, tokenizer, batch_size=args.batch_size,
                 num_workers=args.num_workers, split='train',
-                do_enumeration=True
+                do_enumeration=args.do_enumeration
             )
             val_dataloader = get_dataloaders(
                 args, tokenizer, batch_size=args.batch_size,
@@ -107,10 +107,10 @@ def main(args):
 
             on_best_eval_loss_callback = ModelCheckpoint(
                 dirpath=checkpoint_dir,
-                filename='ckpt_{epoch}_{val_total_loss:.4f}',
+                filename='ckpt_{epoch}_{val_seq2seq_loss:.4f}',
                 save_top_k=3,
                 verbose=True,
-                monitor='val_total_loss',
+                monitor='val_seq2seq_loss',
                 mode='min'
             )
 
@@ -122,7 +122,7 @@ def main(args):
             wandb_logger.watch(model, log="all")
             lr_monitor = LearningRateMonitor(logging_interval='step')
             early_stopping = EarlyStopping(
-                monitor='val_total_loss',
+                monitor='val_seq2seq_loss',
                 patience=5,
                 mode='min'
             )
@@ -139,7 +139,9 @@ def main(args):
                 accelerator='cuda' if args.cuda else 'cpu',
                 devices=args.num_devices,
                 strategy=strategy,
-                max_epochs=args.epochs,
+                max_epochs=-1,
+                max_steps=args.max_steps,
+                val_check_interval=args.val_check_interval,
                 callbacks=callbacks,
                 logger=wandb_logger,
                 gradient_clip_val=1.0 if args.strategy != 'fsdp' else None,

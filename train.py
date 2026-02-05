@@ -107,10 +107,10 @@ def main(args):
 
             on_best_eval_loss_callback = ModelCheckpoint(
                 dirpath=checkpoint_dir,
-                filename='ckpt_{epoch}_{val_total_loss:.4f}',
+                filename='ckpt_{epoch}_{val_seq2seq_loss:.4f}',
                 save_top_k=3,
                 verbose=True,
-                monitor='val_total_loss',
+                monitor='val_seq2seq_loss',
                 mode='min'
             )
 
@@ -122,7 +122,7 @@ def main(args):
             wandb_logger.watch(model, log="all")
             lr_monitor = LearningRateMonitor(logging_interval='step')
             early_stopping = EarlyStopping(
-                monitor='val_total_loss',
+                monitor='val_seq2seq_loss',
                 patience=5,
                 mode='min'
             )

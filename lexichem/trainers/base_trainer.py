@@ -85,6 +85,7 @@ class T5BaseModel(pl.LightningModule):
         self.log('val/total_loss', loss, prog_bar=True, logger=True)
         self.log('val/seq2seq_loss', loss, prog_bar=True, logger=True)
         self.log('val_total_loss', loss, prog_bar=False, logger=False)
+        self.log('val_seq2seq_loss', loss, prog_bar=False, logger=False)
         return loss
     
     def configure_optimizers(self):

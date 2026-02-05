@@ -95,7 +95,7 @@ def main(args):
             train_dataloader = get_dataloaders(
                 args, tokenizer, batch_size=args.batch_size,
                 num_workers=args.num_workers, split='train',
-                do_enumeration=True
+                do_enumeration=args.do_enumeration
             )
             val_dataloader = get_dataloaders(
                 args, tokenizer, batch_size=args.batch_size,

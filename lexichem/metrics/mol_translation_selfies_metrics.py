@@ -8,7 +8,8 @@ from rdkit import DataStructs
 from rdkit.Chem import AllChem
 import numpy as np
 from nltk.translate.bleu_score import corpus_bleu
-from Levenshtein import distance as lev
+from rapidfuzz.distance import Levenshtein
+lev = Levenshtein.distance
 from rdkit import RDLogger
 
 NLTK_VERSION = version.parse(importlib_metadata.version("nltk"))

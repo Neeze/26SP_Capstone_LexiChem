@@ -7,6 +7,7 @@ seeds:
   - 199
 t5:
   pretrained_model_name_or_path: 'QizhiPei/biot5-plus-base'
+  dropout: 0.1
 lr:
   backbone: 1e-5
 trainer:
@@ -22,6 +23,7 @@ trainer:
   precision: '32'
   dataset_name: 'chebi-20'
   output_folder: 'weights/'
+  do_enumeration: true
 optuna:
   use_optuna: false
   n_trials: 10

@@ -11,6 +11,7 @@ from nltk.translate.bleu_score import corpus_bleu
 from rapidfuzz.distance import Levenshtein
 lev = Levenshtein.distance
 from rdkit import RDLogger
+import os
 
 NLTK_VERSION = version.parse(importlib_metadata.version("nltk"))
 
@@ -81,6 +82,10 @@ class Mol_translation_selfies(evaluate.Metric):
         outputs = []
         bad_mols = 0
         total_mols = len(references)
+        
+        if os.path.dirname(tsv_path):
+             os.makedirs(os.path.dirname(tsv_path), exist_ok=True)
+             
         with open(tsv_path, "w", encoding="utf-8") as f:
             f.write("description\tground truth\toutput\tgt_selfies\toutput_selfies\n")
             for desc, gt_smi, out_smi, gt_self, out_self in zip(inputs, references_smi, predictions_smi, references_self, predictions_self):

@@ -142,6 +142,7 @@ def main(args):
                 max_epochs=-1,
                 max_steps=args.max_steps,
                 val_check_interval=args.val_check_interval,
+                check_val_every_n_epoch=None,
                 callbacks=callbacks,
                 logger=wandb_logger,
                 gradient_clip_val=1.0 if args.strategy != 'fsdp' else None,

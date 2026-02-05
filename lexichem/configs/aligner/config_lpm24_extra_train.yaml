@@ -19,7 +19,8 @@ lr:
   backbone: 3e-5
   projector: 1e-4
 trainer:
-  epochs: 10
+  max_steps: 100000
+  val_check_interval: 2000
   batch_size: 8
   grad_accum: 1
   num_workers: 4

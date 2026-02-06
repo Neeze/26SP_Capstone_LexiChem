@@ -23,6 +23,7 @@ from torch import nn
 from torch.nn import CrossEntropyLoss
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
+from lexichem.losses import VICRegLoss, InfoNCELoss, NegativeCosineSimilarityLoss
 
 @dataclass
 class T5WithLossOutput:
@@ -59,6 +60,8 @@ class T5AlignerModel(pl.LightningModule):
         self.seq2seq_lambda = float(args.loss.seq2seq_lambda)
         self.alignment_lambda = float(args.loss.alignment_lambda)
         self.t5_model.gradient_checkpointing_enable()
+
+        self.vicreg_loss = VICRegLoss(args)
 
         # Inference
         self.generation_config = {
@@ -389,38 +392,3 @@ class T5AlignerModel(pl.LightningModule):
             return 1.0
 
         return optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
-    
-    # ================================================================
-    # Contrastive Loss Function
-    # ================================================================
-    
-    def clip_contrastive_pair_loss(self, x, y, logit_scale):
-        B = x.size(0)
-        logits = torch.matmul(x, y.t()) * logit_scale
-        target = torch.arange(B, device=x.device)
-        return F.cross_entropy(logits, target)
-    
-    def negative_cosine_similarity_loss(self, x, y):
-        return -F.cosine_similarity(x, y, dim=-1).mean()
-    
-    def vicreg_loss(self, x, y):
-        lam, mu, nu = 25.0, 25.0, 1.0
-        B, D = x.shape
-
-        # 1. Invariance: MSE Loss
-        sim_loss = F.mse_loss(x, y)
-
-        # 2. Variance: Hinge loss std >= 1
-        std_x = torch.sqrt(x.var(dim=0) + 1e-4)
-        std_y = torch.sqrt(y.var(dim=0) + 1e-4)
-        std_loss = F.relu(1 - std_x).mean() + F.relu(1 - std_y).mean()
-
-        # 3. Covariance
-        x = x - x.mean(dim=0)
-        y = y - y.mean(dim=0)
-        cov_x = (x.T @ x) / (B - 1)
-        cov_y = (y.T @ y) / (B - 1)
-        cov_loss = ((cov_x.pow(2).sum() - cov_x.diag().pow(2).sum()) + 
-                    (cov_y.pow(2).sum() - cov_y.diag().pow(2).sum())) / D
-
-        return lam * sim_loss + mu * std_loss + nu * cov_loss

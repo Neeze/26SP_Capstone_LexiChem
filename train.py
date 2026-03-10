@@ -1,5 +1,5 @@
 from transformers import AutoTokenizer
-from lexichem.datasets import get_dataloaders
+from lexichem.datasets import get_dataloaders, get_mol_instruction_dataloaders
 import lightning as pl
 from lexichem.trainers import T5BaseModel, T5AlignerModel
 from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor, EarlyStopping
@@ -90,17 +90,32 @@ def main(args):
                 args.dataset_name_or_path = 'Neeze/LPM-24-extra-extend'
             elif args.dataset_name == 'chebi-20':
                 args.dataset_name_or_path = 'duongttr/chebi-20-new'
+            elif args.dataset_name == 'mol-inst':
+                args.dataset_name_or_path = 'thienphuprogrammer/mol-instructions-extend'
             else:
-                raise Exception('Dataset name is invalid, please choose one in three: lpm-24, lpm-24-extra, chebi-20')
-            train_dataloader = get_dataloaders(
-                args, tokenizer, batch_size=args.batch_size,
-                num_workers=args.num_workers, split='train',
-                do_enumeration=args.do_enumeration
-            )
-            val_dataloader = get_dataloaders(
-                args, tokenizer, batch_size=args.batch_size,
-                num_workers=args.num_workers, split='validation'
-            )
+                raise Exception('Dataset name is invalid, please choose one in: lpm-24, lpm-24-extra, chebi-20, mol-inst')
+
+            if args.dataset_name == 'mol-inst':
+                # Mix train + validation for training; use test split for validation
+                train_dataloader = get_mol_instruction_dataloaders(
+                    args, tokenizer, batch_size=args.batch_size,
+                    num_workers=args.num_workers, splits='train',
+                    do_enumeration=args.do_enumeration
+                )
+                val_dataloader = get_mol_instruction_dataloaders(
+                    args, tokenizer, batch_size=args.batch_size,
+                    num_workers=args.num_workers, splits='validation'
+                )
+            else:
+                train_dataloader = get_dataloaders(
+                    args, tokenizer, batch_size=args.batch_size,
+                    num_workers=args.num_workers, split='train',
+                    do_enumeration=args.do_enumeration
+                )
+                val_dataloader = get_dataloaders(
+                    args, tokenizer, batch_size=args.batch_size,
+                    num_workers=args.num_workers, split='validation'
+                )
             args.train_data_len = len(train_dataloader) // args.grad_accum
             args.tokenizer = Namespace()
             args.tokenizer.pad_token_id = tokenizer.pad_token_id

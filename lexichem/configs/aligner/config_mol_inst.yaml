@@ -1,0 +1,36 @@
+method: 'aligner'
+seeds: 
+  - 1480
+t5:
+  pretrained_model_name_or_path: 'QizhiPei/biot5-plus-base'
+  dropout: 0.05 
+projector:
+  latent_dim: 768
+  hidden_dim: 2048
+  num_layers: 2
+  dropout: 0.1
+loss:
+  seq2seq_lambda: 1.0
+  alignment_lambda: 0.2
+lr:
+  backbone: 2e-4
+  projector: 5e-4
+trainer:
+  max_steps: 100000
+  val_check_interval: 2000
+  batch_size: 8
+  grad_accum: 4
+  num_workers: 4
+  cuda: true
+  strategy: 'ddp'
+  num_devices: 4
+  warmup_ratio: 0.1
+  precision: '32'
+  dataset_name: 'mol-inst'
+  output_folder: '/state/partition1/tri.pm/checkpoints/'
+  do_enumeration: true
+optuna:
+  use_optuna: false
+  n_trials: 10
+project:
+  name: 'LexiChem-Aligner-Mol-Instruction'

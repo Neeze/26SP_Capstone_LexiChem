@@ -1,0 +1,31 @@
+method: 'base'
+seeds: 
+  - 1480
+  - 1000
+  - 256
+  - 2943
+  - 199
+t5:
+  pretrained_model_name_or_path: 'QizhiPei/biot5-plus-base'
+  dropout: 0.1
+lr:
+  backbone: 3e-5
+trainer:
+  max_steps: 100000
+  val_check_interval: 2000
+  batch_size: 8
+  grad_accum: 2
+  num_workers: 4
+  cuda: true
+  strategy: 'ddp'
+  num_devices: 4
+  warmup_ratio: 0.1
+  precision: '32'
+  dataset_name: 'mol-inst'
+  output_folder: 'weights/'
+  do_enumeration: false
+optuna:
+  use_optuna: false
+  n_trials: 10
+project:
+  name: 'LexiChem-Base-MolInst'

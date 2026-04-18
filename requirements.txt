@@ -14,3 +14,5 @@ numpy==1.26.4
 selfies==2.2.0
 optuna
 rapidfuzz
+pandas
+tabulate

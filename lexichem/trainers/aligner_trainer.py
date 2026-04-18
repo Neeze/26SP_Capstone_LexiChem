@@ -56,9 +56,14 @@ class T5AlignerModel(pl.LightningModule):
             dropout=args.projector.dropout
         )
         self.config = self.t5_model.config
-        self.seq2seq_lambda = float(args.loss.seq2seq_lambda)
-        self.alignment_lambda = float(args.loss.alignment_lambda)
+        self.vicreg_lambda = float(args.loss.vicreg_lambda)
+        self.vicreg_mu = float(args.loss.vicreg_mu)
+        self.vicreg_nu = float(args.loss.vicreg_nu)
         self.t5_model.gradient_checkpointing_enable()
+
+        self.t5_model = torch.compile(self.t5_model)
+        self.molecule_proj = torch.compile(self.molecule_proj)
+        self.language_proj = torch.compile(self.language_proj)
 
         # Inference
         self.generation_config = {
@@ -230,7 +235,7 @@ class T5AlignerModel(pl.LightningModule):
             loss_fct = CrossEntropyLoss(ignore_index=-100)
             labels = labels.to(lm_logits.device)
             seq2seq_loss = loss_fct(lm_logits.view(-1, lm_logits.size(-1)), labels.view(-1))
-            seq2seq_loss = seq2seq_loss * self.seq2seq_lambda
+
         
         # ========================================================================
         # CONTRASTIVE LOSS: Encoder-Decoder embedding alignment
@@ -250,8 +255,8 @@ class T5AlignerModel(pl.LightningModule):
             lang_emb_full = lang_emb
             mol_emb_full = mol_emb
 
-        vicreg_val = self.vicreg_loss(lang_emb_full, mol_emb_full)
-        contrastive_loss = self.alignment_lambda * vicreg_val
+        contrastive_loss = self.vicreg_loss(lang_emb_full, mol_emb_full)
+
 
         # ========================================================================
         # TOTAL LOSS: Seq2Seq + Contrastive
@@ -404,7 +409,7 @@ class T5AlignerModel(pl.LightningModule):
         return -F.cosine_similarity(x, y, dim=-1).mean()
     
     def vicreg_loss(self, x, y):
-        lam, mu, nu = 25.0, 25.0, 1.0
+        lam, mu, nu = self.vicreg_lambda, self.vicreg_mu, self.vicreg_nu
         B, D = x.shape
 
         # 1. Invariance: MSE Loss

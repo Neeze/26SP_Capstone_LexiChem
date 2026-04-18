@@ -16,6 +16,7 @@ class T5BaseModel(pl.LightningModule):
             dropout_rate=args.t5.dropout
         )
         self.t5_model.gradient_checkpointing_enable()
+        self.t5_model = torch.compile(self.t5_model)
         self.save_hyperparameters(args)
 
         # Inference

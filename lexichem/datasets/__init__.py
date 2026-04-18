@@ -7,6 +7,7 @@ from .dataset_module import (
     get_dataloaders_inferlpm24,
     get_mol_instruction_dataloaders,
     get_mol_instruction_val_dataloaders_per_task,
+    MixedDataset,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "get_dataloaders_inferlpm24",
     "get_mol_instruction_dataloaders",
     "get_mol_instruction_val_dataloaders_per_task",
+    "MixedDataset",
 ]

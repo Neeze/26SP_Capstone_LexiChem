@@ -13,7 +13,8 @@ class MoleculeGeneration(Dataset):
                  input_max_length=512,
                  output_max_length=512,
                  add_instruction=True,
-                 do_enumeration=False,):
+                 do_enumeration=False,
+                 task='text2mol'):
         super().__init__()
         num_cores = os.cpu_count()
         self.dataset = load_dataset(dataset_name_or_path, split=split, use_auth_token=True, num_proc=num_cores)
@@ -25,6 +26,7 @@ class MoleculeGeneration(Dataset):
         self.is_lpm_24 = 'LPM-24' in dataset_name_or_path
         self.add_instruction = add_instruction
         self.do_enumeration = do_enumeration
+        self.task = task
             
         self.tokenizer = tokenizer
         self.input_max_length = input_max_length
@@ -54,14 +56,28 @@ class MoleculeGeneration(Dataset):
             except Exception as e:
                 pass
 
-        if self.add_instruction:
-            model_input = (
-                f"Task: Translate description to SELFIES representation.\n"
-                f"Input: {sample_caption}\n"
-                f"Output:"
-            )
+        if self.task == 'text2mol':
+            if self.add_instruction:
+                model_input = (
+                    f"Task: Translate description to SELFIES representation.\n"
+                    f"Input: {sample_caption}\n"
+                    f"Output:"
+                )
+            else:
+                model_input = sample_caption
+            target_text = sample_selfies
+        elif self.task == 'mol2text':
+            if self.add_instruction:
+                model_input = (
+                    f"Task: Translate SELFIES representation to description.\n"
+                    f"Input: {sample_selfies}\n"
+                    f"Output:"
+                )
+            else:
+                model_input = sample_selfies
+            target_text = sample_caption
         else:
-            model_input = sample_caption
+            raise ValueError(f"Unknown task: {self.task}")
         
         if add_padding:
             input = self.tokenizer(
@@ -75,7 +91,7 @@ class MoleculeGeneration(Dataset):
             )
             
             output = self.tokenizer(
-                sample_selfies,
+                target_text,
                 add_special_tokens=True,
                 max_length=self.output_max_length,
                 padding = 'max_length',
@@ -92,7 +108,7 @@ class MoleculeGeneration(Dataset):
             )
             
             output = self.tokenizer(
-                sample_selfies,
+                target_text,
                 add_special_tokens=True,
                 return_attention_mask = True,
                 return_tensors='pt'
@@ -109,6 +125,8 @@ class MoleculeGeneration(Dataset):
             'selfies': sample_selfies,
             'caption': sample_caption,
         }
+
+
 class MoleculeGeneration_InferLPM24(Dataset):
     def __init__(self,
                  args,
@@ -369,17 +387,60 @@ def get_mol_instruction_val_dataloaders_per_task(args, tokenizer, batch_size=8, 
     return loaders
 
 
-def get_dataloaders(args, tokenizer, batch_size=8, num_workers=4, split='train', add_instruction=True, do_enumeration=False):
-    dataset = MoleculeGeneration(
-        args,
-        tokenizer=tokenizer,
-        dataset_name_or_path=args.dataset_name_or_path,
-        split=split,
-        input_max_length=512,
-        output_max_length=512,
-        add_instruction=add_instruction,
-        do_enumeration=do_enumeration
-    )
+class MixedDataset(Dataset):
+    def __init__(self, datasets):
+        self.datasets = datasets
+        self.lengths = [len(d) for d in datasets]
+        self.total_len = sum(self.lengths)
+
+    def __len__(self):
+        return self.total_len
+
+    def __getitem__(self, index):
+        for i, length in enumerate(self.lengths):
+            if index < length:
+                return self.datasets[i][index]
+            index -= length
+        raise IndexError
+
+
+def get_dataloaders(args, tokenizer, batch_size=8, num_workers=4, split='train', add_instruction=True, do_enumeration=False, do_multitask=False):
+    if do_multitask:
+        dataset_text2mol = MoleculeGeneration(
+            args,
+            tokenizer=tokenizer,
+            dataset_name_or_path=args.dataset_name_or_path,
+            split=split,
+            input_max_length=512,
+            output_max_length=512,
+            add_instruction=add_instruction,
+            do_enumeration=do_enumeration,
+            task='text2mol'
+        )
+        dataset_mol2text = MoleculeGeneration(
+            args,
+            tokenizer=tokenizer,
+            dataset_name_or_path=args.dataset_name_or_path,
+            split=split,
+            input_max_length=512,
+            output_max_length=512,
+            add_instruction=add_instruction,
+            do_enumeration=do_enumeration,
+            task='mol2text'
+        )
+        dataset = MixedDataset([dataset_text2mol, dataset_mol2text])
+    else:
+        dataset = MoleculeGeneration(
+            args,
+            tokenizer=tokenizer,
+            dataset_name_or_path=args.dataset_name_or_path,
+            split=split,
+            input_max_length=512,
+            output_max_length=512,
+            add_instruction=add_instruction,
+            do_enumeration=do_enumeration,
+            task='text2mol'
+        )
     return DataLoader(
         dataset,
         batch_size=batch_size,

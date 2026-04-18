@@ -1,10 +1,6 @@
 method: 'aligner'
 seeds: 
   - 1480
-  - 1000
-  - 256
-  - 2943
-  - 199
 t5:
   pretrained_model_name_or_path: 'QizhiPei/biot5-plus-base'
   dropout: 0.05 
@@ -14,9 +10,8 @@ projector:
   num_layers: 2
   dropout: 0.1
 loss:
-  vicreg_lambda: 25.0
-  vicreg_mu: 25.0
-  vicreg_nu: 1.0
+  seq2seq_lambda: 1.0
+  alignment_lambda: 0.5
 lr:
   backbone: 1e-4
   projector: 5e-4
@@ -35,7 +30,7 @@ trainer:
   output_folder: 'weights/'
   do_enumeration: true
 optuna:
-  use_optuna: false
-  n_trials: 10
+  use_optuna: true
+  n_trials: 64 # 4x4x4 grid search
 project:
-  name: 'LexiChem-Aligner-ChEBI20'
+  name: 'LexiChem-Optuna-Tuner'

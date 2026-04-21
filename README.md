@@ -1,10 +1,10 @@
-<h1 align="center">ChemAligner-T5</h1>
-<p align="center"><a href="#abstract">📝 Paper</a> | <a href="#3-benchmark-datasets">🤗 Benchmark datasets</a> | <a href="https://huggingface.co/collections/Neeze/chemaligner-t5">🚩 Checkpoints</a> | <a href="https://huggingface.co/collections/Neeze/chemaligner-t5">⚙️ Application</a> | <a href="#citation">📚 Cite our paper!</a></p>
+<h1 align="center">LEXICHEM</h1>
+<p align="center"><a href="#abstract">📝 Paper</a> | <a href="#3-benchmark-datasets">🤗 Benchmark datasets</a> | <a href="">🚩 Checkpoints</a> | <a href="">⚙️ Application</a> | <a href="#citation">📚 Cite our paper!</a></p>
 
-The official implementation of manuscript **"ChemAligner-T5: A Unified Text-to-Molecule Model via Representation Alignment"**
+The official implementation of manuscript **LEXICHEM: COEVOLVING ALIGNING LANGUAGE AND MOLECULES IN A SHARED LATENT SPACE**
 
 ## Abstract
-> Molecular generation from natural language descriptions is becoming an important approach for guided molecule design, as it allows researchers to express chemical objectives directly in textual form. However, string representations such as SMILES and SELFIES reside in embedding spaces that differ significantly from natural language, creating a mismatch that prevents generative models from accurately capturing the intended chemical semantics. This gap raises the question of whether a shared representation space can be constructed in which textual descriptions and molecular strings converge in a controlled manner. Motivated by this gap, we introduce ChemAligner-T5, a BioT5+ base model enhanced with a contrastive learning mechanism to directly align textual and molecular representations. On the L+M-24 test set, ChemAligner-T5 achieves a BLEU score of 69.77\% and a Levenshtein distance of 31.28\%, outperforming MolT5-base and Meditron on both metrics. Visual analysis shows that the model successfully reproduces the structural scaffold and key functional groups of the target molecule. These results highlight the importance of text–molecule representation alignment for the Text2Mol task and strengthen the potential of language models as direct interfaces for molecule design and drug discovery guided by natural-language descriptions.
+> Translating natural language descriptions of molecules into exact molecular structures remains a formidable bottleneck in computational chemistry, revealing a profound modality gap between linguistic abstraction and topological rigor that requires deep representation alignment to resolve. Sequence-based generative models readily yield syntactically viable strings, yet they routinely fail to preserve the precise semantic intent governing human-authored descriptions. This functional deficit reveals a profound modality gap between linguistic abstraction and topological rigor, which superficial sequence-to-sequence translation cannot resolve without strict deep representation alignment. We introduce LexiChem: a unified generative framework engineered to synchronize textual and chemical representations within a continuous latent topology. The architecture utilizes parallel encoding streams for natural language prompts and molecular inputs mapped to robust Self-Referencing Embedded Strings (SELFIES) formulations. To traverse the cross-modal divide without precipitating dimensional collapse, we deploy Variance-Invariance-Covariance Regularization (VICReg) coupled with asymmetric gradient interruption. This dual protocol safeguards the sophisticated reasoning circuitry of the pretrained language backbone while precisely steering the molecular encoder toward established semantic manifolds. Conditioned upon this integrated feature space, an autoregressive decoder synthesizes targeted chemical structures. We optimize contrastive alignment and generative objectives jointly to maximize cross-modal fidelity. An integrated multimodal data pipeline, featuring rigorous RDKit-mediated validity filtering and curation, strictly governs the underlying training distribution. Extensive evaluation across string-level parameters and domain-specific topological metrics, including Tanimoto fingerprint similarities, conclusively validates the methodology. Our findings confirm that this alignment-centric architecture delivers robust generative precision alongside structurally flawless molecular geometries. Ultimately, LexiChem establishes that explicitly unifying the latent domains of text and chemistry yields highly faithful, semantically governed molecular design.
 
 
 ## How to use
@@ -13,8 +13,8 @@ The official implementation of manuscript **"ChemAligner-T5: A Unified Text-to-M
 After cloning the repo, run the following command to install required packages:
 
 ```zsh
-conda create -n ChemAligner python=3.10
-conda activate ChemAligner
+conda create -n LEXICHEM python=3.10
+conda activate LEXICHEM
 pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu121
 pip install python-dotenv optuna huggingface_hub
 pip install -r requirements.txt
@@ -92,14 +92,6 @@ python eval.py --config lexichem/configs/aligner/config_chebi20_train.yaml
 ```zsh
 python push_to_hub.py --model_name biot5-plus-base-sft \
                       --ckpt_path path/to/ckpt \
-```
-
-### 5. Application
-#### Start the app
-You can interact with the model through a user interface by running the following command:
-
-```zsh
-python app.py
 ```
 
 ## Citation
